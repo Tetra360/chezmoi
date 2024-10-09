@@ -4,7 +4,7 @@ echo ">>> .zshrc を読み込み中"
 # Homebrew パス設定
 if [[ "$(uname)" == "Darwin" ]]; then
     # macOS の場合
-    export PATH="/usr/local/bin:$PATH"
+    export PATH="/opt/homebrew/bin:$PATH"
     echo ">>> macOS用の環境変数を読み込み Homebrew"
 elif [[ "$(uname)" == "Linux" ]]; then
     # linux の場合
@@ -73,3 +73,8 @@ source ~/.p10k.zsh
 # nvm パス設定
 export NVM_DIR="$(brew --prefix nvm)"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# [pyenv]
+export PYENV_DIR="$(brew --prefix pyenv)"
+[[ -d $PYENV_DIR/bin ]] && export PATH="$PYENV_DIR/bin:$PATH"
+eval "$(pyenv init -)"
