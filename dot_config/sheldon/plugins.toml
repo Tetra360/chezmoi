@@ -1,0 +1,23 @@
+shell = "zsh"  # シェルとして Zsh を使用する設定
+
+# Sheldon 用のプラグイン設定
+
+# 入力したコマンドの候補を自動的に提案するプラグイン
+[plugins.zsh-autosuggestions]
+github = "zsh-users/zsh-autosuggestions" 
+
+# 有効なコマンドやファイル名を色付けして視覚的にわかりやすくするプラグイン
+[plugins.zsh-syntax-highlighting]
+github = "zsh-users/zsh-syntax-highlighting" 
+
+# タブ補完を強化し、コマンドの補完機能を向上させるプラグイン
+[plugins.zsh-completions]
+github = "zsh-users/zsh-completions"
+
+# Oh My Zsh の基本機能を有効にする設定
+[plugins.oh-my-zsh]
+github = "ohmyzsh/ohmyzsh" 
+
+# Zsh のプロンプトをカスタマイズするための Powerlevel10k テーマ
+[plugins.powerlevel10k]
+github = "romkatv/powerlevel10k"

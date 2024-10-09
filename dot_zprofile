@@ -1,0 +1,29 @@
+# ~/.zprofile: ログインシェルのためにコマンドインタプリタによって実行されるファイルです。
+# このファイルは、~/.bash_profile または ~/.bash_login が存在する場合、bash(1) では読み込まれません。
+# 詳細は /usr/share/doc/bash/examples/startup-files を参照してください。
+# これらのファイルは bash-doc パッケージに含まれています。
+
+# デフォルトの umask は /etc/profile で設定されます。
+# SSH ログインのための umask を設定するには、libpam-umask パッケージをインストールして設定してください。
+#umask 022
+
+# bash が実行されている場合
+if [ -n "$BASH_VERSION" ]; then
+    # .bashrc が存在する場合、読み込む
+    if [ -f "$HOME/.bashrc" ]; then
+        . "$HOME/.bashrc"
+    fi
+fi
+
+# ユーザーのプライベート bin ディレクトリが存在する場合、PATH に追加する
+if [ -d "$HOME/bin" ]; then
+    PATH="$HOME/bin:$PATH"
+fi
+
+# ユーザーのプライベート bin ディレクトリが存在する場合、PATH に追加する
+if [ -d "$HOME/.local/bin" ]; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+
+# .zshrc を読み込む
+source ~/.zshrc
