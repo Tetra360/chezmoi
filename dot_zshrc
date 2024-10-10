@@ -6,10 +6,10 @@ echo ">>> Loading .zshrc"
 # zmodload zsh/zprof && zprof # 詳細データ出力
 # ========================================
 # [Homebrew]
-Homebrew パス設定
+# Homebrew パス設定
 if [[ "$(uname)" == "Darwin" ]]; then
     # macOS の場合
-    export PATH="/usr/local/bin:$PATH"
+    export PATH="/opt/homebrew/bin:$PATH"
     echo ">>> Loaded the Homebrew configuration file for macOS"
 elif [[ "$(uname)" == "Linux" ]]; then
     # Linux の場合
@@ -109,16 +109,16 @@ load-nvm() {
 load-nvmrc() {
   # nvmを初期化（必要に応じて）
   load-nvm
-  
+
   # nvmの初期化を確認
   if type nvm &>/dev/null; then
     # 現在のディレクトリで.nvmrcファイルを探し、そのパスを取得
     local nvmrc_path="$(nvm_find_nvmrc)"
-    
+
     # .nvmrcファイルが見つかった場合、そのバージョンに切り替える
     if [ -n "$nvmrc_path" ]; then
       # 使用するバージョンを表示する
-      nvm use &>/dev/null 
+      nvm use &>/dev/null
       local version=$(nvm current)
       echo ">>> nvm: Using Node.js version $version from .nvmrc file."
     fi
@@ -162,7 +162,7 @@ preexec_functions+=init_comp  # コマンド送信前に実行
 # elapsed_time=$(echo "$end_time - $start_time" | bc)  # 経過時間を計算
 
 # # 合計読み込み時間を出力
-# printf ">>> Total loading time: %.3f s\n" "$elapsed_time" 
+# printf ">>> Total loading time: %.3f s\n" "$elapsed_time"
 
 # # 読み込み計測結果を表示
 # if (which zprof > /dev/null 2>&1) ;then
