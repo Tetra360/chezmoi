@@ -1,40 +1,36 @@
-echo ">>> .zshrc を読み込み中"
+# ========================================
+echo ">>> Loading .zshrc"
+# ========================================
+# # 読み込み時間計測
+# start_time=$(date +%s.%N) # 起動時間の開始時刻を取得
+# zmodload zsh/zprof && zprof # 詳細データ出力
 # ========================================
 # [Homebrew]
-# Homebrew パス設定
+Homebrew パス設定
 if [[ "$(uname)" == "Darwin" ]]; then
     # macOS の場合
     export PATH="/usr/local/bin:$PATH"
-    echo ">>> macOS用の環境変数を読み込み Homebrew"
+    echo ">>> Loaded the Homebrew configuration file for macOS"
 elif [[ "$(uname)" == "Linux" ]]; then
-    # linux の場合
+    # Linux の場合
     export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
-    echo ">>> linux用の環境変数を読み込み Homebrew"
+    echo ">>> Loaded the Homebrew configuration file for Linux"
 fi
 
 # ========================================
 # [sheldon]
-# sheldon パス設定
-export PATH="${HOME}/.local/bin:$PATH"
 # Sheldoni 読み込み
 eval "$(sheldon source)"
 
-# Zsh-completions
-# sheldonで管理されているプラグインのディレクトリを取得
-SHELDON_REPOS_DIR="$HOME/.local/share/sheldon/repos"
-# zsh-completionsのパスをfpathに追加
-fpath=("$SHELDON_REPOS_DIR/github.com/zsh-users/zsh-completions" $fpath)
-# 補完機能を初期化
-autoload -Uz compinit && compinit
-
-# zsh-syntax-highlighting
-# コマンド入力時に即時反映
-typeset -g ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)
+# Powerlevel10k
+# Powerlevel10kの設定ファイル読み込み
+# ~/.p10k.zshのカスタムテーマを使用する場合は"MesloLGS NF"をインストール
+source ~/.p10k.zsh
 
 # ========================================
 # .zsh_historyの設定
 if [ -z "$HISTFILE" ]; then
-	HISTFILE=$HOME/.zsh_history
+    HISTFILE=$HOME/.zsh_history
 fi
 
 HISTSIZE=10000 # メモリ上に保存される件数（検索できる件数）
@@ -42,8 +38,8 @@ SAVEHIST=10000 # ファイルに保存される件数
 
 # rootユーザーの履歴は残さない
 if [ $UID = 0 ]; then
-	unset HISTFILE
-	SAVEHIST=0
+    unset HISTFILE
+    SAVEHIST=0
 fi
 
 setopt append_history # zshを複数使用した時，履歴ファイルを上書きせず追加する
@@ -54,22 +50,122 @@ setopt hist_ignore_dups # ファイルに書き出す時，古いコマンドと
 setopt hist_ignore_space # スペースで始まる場合は履歴に追加しない
 setopt hist_save_no_dups # 重複するコマンドが保存される時に古い方を削除する
 setopt hist_verify # 履歴を呼び出してから実行する間に一旦編集できる状態になる
+setopt hist_reduce_blanks # 余分な空白は詰めて記録
 setopt inc_append_history # コマンド実行時に履歴をファイルに保存する
 setopt share_history # 履歴を複数端末で共有する
 
 # ========================================
 # [fzf]
-# fzfの設定ファイル読み込み
-source ~/.fzf.zsh
 
-# ========================================
-# [Powerlevel10k]
-# Powerlevel10kの設定ファイル読み込み
-# ~/.p10k.zshのカスタムテーマを使用する場合は"MesloLGS NF"をインストール
-source ~/.p10k.zsh
+# fzf を Zsh に読み込む
+source <(fzf --zsh)
+
+# 履歴からfzfを使ってコマンドを選択する関数
+function fzf-history-selection() {
+    # コマンド履歴を逆順に取得し、重複を排除
+    BUFFER=`history -n 1 | tac | awk '!a[$0]++' | fzf-tmux -p --reverse --height 40%`
+    # 選択したコマンドをバッファにセット
+    CURSOR=$#BUFFER
+    # プロンプトをリセットして更新
+    zle reset-prompt
+}
+
+# zle (Zsh Line Editor) にfzf-history-selection関数を登録
+zle -N fzf-history-selection
+
+# 未入力状態でTabを押したときにfzfを起動する関数
+function fzf-tab-selection() {
+    # バッファが完全に空の場合にfzfを起動
+    if [[ -z "$BUFFER" ]]; then
+        fzf-history-selection  # 履歴から選択
+    else
+        # デフォルトのTab補完を呼び出す
+        zle expand-or-complete
+    fi
+}
+
+# zle にfzf-tab-selection関数を登録
+zle -N fzf-tab-selection
+
+# Tabキーをfzf-tab-selection関数にバインド
+bindkey '^I' fzf-tab-selection
 
 # ========================================
 # [nvm]
-# nvm パス設定
-export NVM_DIR="$(brew --prefix nvm)"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+# ----------------------------------------
+# nvmを遅延初期化する関数
+load-nvm() {
+  # もしnvmがロードされていなければ、nvmを初期化する
+  if ! type nvm &>/dev/null; then
+    # brew経由でインストールしたnvmのパスを設定
+    export NVM_DIR="$(brew --prefix nvm)"
+    # nvmスクリプトが存在する場合に読み込む
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  fi
+}
+
+# ----------------------------------------
+# ディレクトリ変更時に自動でnvmrcファイルを読み込み、Node.jsのバージョンを切り替える関数
+load-nvmrc() {
+  # nvmを初期化（必要に応じて）
+  load-nvm
+  
+  # nvmの初期化を確認
+  if type nvm &>/dev/null; then
+    # 現在のディレクトリで.nvmrcファイルを探し、そのパスを取得
+    local nvmrc_path="$(nvm_find_nvmrc)"
+    
+    # .nvmrcファイルが見つかった場合、そのバージョンに切り替える
+    if [ -n "$nvmrc_path" ]; then
+      # 使用するバージョンを表示する
+      nvm use &>/dev/null 
+      local version=$(nvm current)
+      echo ">>> nvm: Using Node.js version $version from .nvmrc file."
+    fi
+  fi
+}
+
+# chpwdフックを利用してディレクトリ変更時にload-nvmrcを実行
+add-zsh-hook chpwd load-nvmrc
+
+# ========================================
+# [zsh起動速度改善]
+# 補完機能を遅延初期化する関数
+function delayed_compinit {
+    autoload -Uz compinit  # compinitを読み込む
+    compinit  # 補完機能を初期化
+}
+
+# コマンド送信前に補完機能を初期化
+function init_comp {
+    # インタラクティブモードでない場合は終了
+    if [[ $ZSH_EVAL_CONTEXT != *:interactive:* ]]; then
+        return
+    fi
+
+    # 補完機能の初期化をバックグラウンドで実行
+    {
+        sleep 1  # 1秒待機 コマンド処理とのリソース競合を回避
+        delayed_compinit  # 補完機能を初期化
+    } > /dev/null 2>&1 &  # 出力を無視
+
+    # 一度だけ実行する
+    unset -f init_comp  # 再実行防止
+}
+
+# コマンド実行時にinit_compを実行
+preexec_functions+=init_comp  # コマンド送信前に実行
+
+# ========================================
+# # 読み込み時間計測
+# end_time=$(date +%s.%N)  # 起動時間の終了時刻を取得
+# elapsed_time=$(echo "$end_time - $start_time" | bc)  # 経過時間を計算
+
+# # 合計読み込み時間を出力
+# printf ">>> Total loading time: %.3f s\n" "$elapsed_time" 
+
+# # 読み込み計測結果を表示
+# if (which zprof > /dev/null 2>&1) ;then
+#   zprof
+# fi
+# ========================================
