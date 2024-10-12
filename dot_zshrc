@@ -95,38 +95,16 @@ bindkey '^I' fzf-tab-selection
 # ----------------------------------------
 # nvmを遅延初期化する関数
 load-nvm() {
-  # もしnvmがロードされていなければ、nvmを初期化する
-  if ! type nvm &>/dev/null; then
-    # brew経由でインストールしたnvmのパスを設定
-    export NVM_DIR="$(brew --prefix nvm)"
-    # nvmスクリプトが存在する場合に読み込む
+  # nvmをロード済みなら処理しない
+  if [[ -z "${NVM_LOADED}" ]]; then
+    export NVM_DIR="${NVM_DIR:-$(brew --prefix nvm)}"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  fi
-}
-
-# ----------------------------------------
-# ディレクトリ変更時に自動でnvmrcファイルを読み込み、Node.jsのバージョンを切り替える関数
-load-nvmrc() {
-  # nvmを初期化（必要に応じて）
-  load-nvm
-
-  # nvmの初期化を確認
-  if type nvm &>/dev/null; then
-    # 現在のディレクトリで.nvmrcファイルを探し、そのパスを取得
-    local nvmrc_path="$(nvm_find_nvmrc)"
-
-    # .nvmrcファイルが見つかった場合、そのバージョンに切り替える
-    if [ -n "$nvmrc_path" ]; then
-      # 使用するバージョンを表示する
-      nvm use &>/dev/null
-      local version=$(nvm current)
-      echo ">>> nvm: Using Node.js version $version from .nvmrc file."
-    fi
+    export NVM_LOADED=1  # ロード済みフラグを立てる
   fi
 }
 
 # chpwdフックを利用してディレクトリ変更時にload-nvmrcを実行
-add-zsh-hook chpwd load-nvmrc
+add-zsh-hook chpwd load-nvm
 
 # ========================================
 # [zsh起動速度改善]
